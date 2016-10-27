@@ -475,9 +475,7 @@ function get_clipboard(clip)
 		local res = utils.subprocess({ args = {
 			'xclip', '-selection', clip and 'clipboard' or 'primary', '-out'
 		} })
-		if res.error then
-			return ''
-		else
+		if not res.error then
 			return res.stdout
 		end
 	elseif platform == 'windows' then
@@ -497,9 +495,12 @@ function get_clipboard(clip)
 				$out.Write($u8clipboard, 0, $u8clipboard.Length)
 			}]]
 		} })
-		if res.error then
-			return ''
-		else
+		if not res.error then
+			return res.stdout
+		end
+	elseif platform == 'macos' then
+		local res = utils.subprocess({ args = { 'pbpaste' } })
+		if not res.error then
 			return res.stdout
 		end
 	end
@@ -577,6 +578,7 @@ local bindings = {
 	{ 'ctrl+l',      clear_log_buffer                       },
 	{ 'ctrl+u',      del_to_start                           },
 	{ 'ctrl+v',      function() paste(true) end             },
+	{ 'meta+v',      function() paste(true) end             },
 	{ 'ctrl+w',      del_word                               },
 }
 -- Add bindings for all the printable US-ASCII characters from ' ' to '~'
