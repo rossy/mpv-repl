@@ -184,7 +184,7 @@ function set_active(active)
 	if active then
 		repl_active = true
 		insert_mode = false
-		mp.enable_key_bindings('repl-input')
+		mp.enable_key_bindings('repl-input', 'allow-hide-cursor+allow-vo-dragging')
 	else
 		repl_active = false
 		mp.disable_key_bindings('repl-input')
