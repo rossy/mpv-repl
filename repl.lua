@@ -485,14 +485,18 @@ function get_clipboard(clip)
 					Write-Error -ErrorRecord $_
 					Exit 1
 				}
-				Add-Type -AssemblyName PresentationCore
 
-				$u8 = [System.Text.Encoding]::UTF8
-				$out = [Console]::OpenStandardOutput()
+				$clip = ""
+				if (Get-Command "Get-Clipboard" -errorAction SilentlyContinue) {
+					$clip = Get-Clipboard -Raw -Format Text -TextFormatType UnicodeText
+				} else {
+					Add-Type -AssemblyName PresentationCore
+					$clip = [Windows.Clipboard]::GetText()
+				}
 
-				$clipboard = [Windows.Clipboard]::GetText() -replace "`r",""
-				$u8clipboard = $u8.GetBytes($clipboard)
-				$out.Write($u8clipboard, 0, $u8clipboard.Length)
+				$clip = $clip -Replace "`r",""
+				$u8clip = [System.Text.Encoding]::UTF8.GetBytes($clip)
+				[Console]::OpenStandardOutput().Write($u8clip, 0, $u8clip.Length)
 			}]]
 		} })
 		if not res.error then
