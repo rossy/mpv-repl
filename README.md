@@ -29,6 +29,13 @@ Keybindings
 | <kbd>Ctrl</kbd> + <kbd>V</kbd> | Paste text (uses the clipboard on X11) |
 | <kbd>Ctrl</kbd> + <kbd>W</kbd> | Delete text from the cursor to the beginning of the current word |
 
+Commands
+--------
+
+| Command | Action |
+| :--- | :--- |
+| ``script-message-to repl type "<text>"`` | Show the REPL and pre-fill it with the provided text |
+
 Known issues
 ------------
 

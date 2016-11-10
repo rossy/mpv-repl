@@ -192,6 +192,27 @@ function set_active(active)
 	update()
 end
 
+-- Show the repl if hidden and replace its contents with 'text'
+-- (script-message-to repl type)
+function show_and_type(text)
+	text = text or ''
+
+	-- Save the line currently being edited, just in case
+	if line ~= text and line ~= '' and history[#history] ~= line then
+		history[#history + 1] = line
+	end
+
+	line = text
+	cursor = line:len() + 1
+	history_pos = #history + 1
+	insert_mode = false
+	if repl_active then
+		update()
+	else
+		set_active(true)
+	end
+end
+
 -- Insert a character at the current cursor position (' '-'~', Shift+Enter)
 function handle_char_input(c)
 	if insert_mode then
@@ -597,10 +618,15 @@ for b = (' '):byte(), ('~'):byte() do
 end
 add_repl_bindings(bindings)
 
--- Finally, add a global binding for enabling the REPL. While it's enabled, its
--- bindings will take over and it can be closed with ESC.
+-- Add a global binding for enabling the REPL. While it's enabled, its bindings
+-- will take over and it can be closed with ESC.
 mp.add_key_binding('`', 'repl-enable', function()
 	set_active(true)
+end)
+
+-- Add a script-message to show the REPL and fill it with the provided text
+mp.register_script_message('type', function(text)
+	show_and_type(text)
 end)
 
 -- Redraw the REPL when the OSD size changes. This is needed because the
