@@ -213,10 +213,29 @@ function show_and_type(text)
 	end
 end
 
+-- Naive helper function to find the next UTF-8 character in 'str' after 'pos'
+-- by skipping continuation bytes. Assumes 'str' contains valid UTF-8.
+function next_utf8(str, pos)
+	if pos > str:len() then return pos end
+	repeat
+		pos = pos + 1
+	until pos > str:len() or str:byte(pos) < 0x80 or str:byte(pos) > 0xbf
+	return pos
+end
+
+-- As above, but finds the previous UTF-8 charcter in 'str' before 'pos'
+function prev_utf8(str, pos)
+	if pos <= 1 then return pos end
+	repeat
+		pos = pos - 1
+	until pos <= 1 or str:byte(pos) < 0x80 or str:byte(pos) > 0xbf
+	return pos
+end
+
 -- Insert a character at the current cursor position (' '-'~', Shift+Enter)
 function handle_char_input(c)
 	if insert_mode then
-		line = line:sub(1, cursor - 1) .. c .. line:sub(cursor + 1)
+		line = line:sub(1, cursor - 1) .. c .. line:sub(next_utf8(line, cursor))
 	else
 		line = line:sub(1, cursor - 1) .. c .. line:sub(cursor)
 	end
@@ -224,30 +243,19 @@ function handle_char_input(c)
 	update()
 end
 
--- Helper function to restrict the cursor position to a legal value
-function normalize_cursor()
-	if cursor < 1 then
-		cursor = 1
-	end
-	if cursor > line:len() + 1 then
-		cursor = line:len() + 1
-	end
-end
-
 -- Remove the character behind the cursor (Backspace)
 function handle_backspace()
 	if cursor <= 1 then return end
-	line = line:sub(1, cursor - 2) .. line:sub(cursor)
-	cursor = cursor - 1
-	normalize_cursor()
+	local prev = prev_utf8(line, cursor)
+	line = line:sub(1, prev - 1) .. line:sub(cursor)
+	cursor = prev
 	update()
 end
 
 -- Remove the character in front of the cursor (Del)
 function handle_del()
 	if cursor > line:len() then return end
-	line = line:sub(1, cursor - 1) .. line:sub(cursor + 1)
-	normalize_cursor()
+	line = line:sub(1, cursor - 1) .. line:sub(next_utf8(line, cursor))
 	update()
 end
 
@@ -256,10 +264,15 @@ function handle_ins()
 	insert_mode = not insert_mode
 end
 
--- Move the cursor by the specified amount (Left, Right)
-function move_cursor(amount)
-	cursor = cursor + amount
-	normalize_cursor()
+-- Move the cursor to the next character (Right)
+function next_char(amount)
+	cursor = next_utf8(line, cursor)
+	update()
+end
+
+-- Move the cursor to the previous character (Left)
+function prev_char(amount)
+	cursor = prev_utf8(line, cursor)
 	update()
 end
 
@@ -580,8 +593,8 @@ local bindings = {
 	{ 'ins',         handle_ins                             },
 	{ 'shift+ins',   function() paste(false) end            },
 	{ 'mouse_btn1',  function() paste(false) end            },
-	{ 'left',        function() move_cursor(-1) end         },
-	{ 'right',       function() move_cursor(1) end          },
+	{ 'left',        function() prev_char() end             },
+	{ 'right',       function() next_char() end             },
 	{ 'up',          function() move_history(-1) end        },
 	{ 'axis_up',     function() move_history(-1) end        },
 	{ 'mouse_btn3',  function() move_history(-1) end        },

@@ -41,7 +41,7 @@ Known issues
 
 - Pasting text is slow on Windows
 - Non-ASCII keyboard input doesn't work
-- Cursor movement and line editing is broken for UTF-8 characters
+- The cursor keys move between Unicode code-points, not grapheme clusters
 
 Disclaimer
 ----------
