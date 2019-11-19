@@ -178,6 +178,18 @@ function update()
 	mp.set_osd_ass(screenx, screeny, ass.text)
 end
 
+function enable_messages(silent)
+	if silent then
+		if not pcall(function () mp.enable_messages('silent:terminal-default') end) then
+			mp.enable_messages('info')
+		end
+	else
+		if not pcall(function () mp.enable_messages('terminal-default') end) then
+			mp.enable_messages('info')
+		end
+	end
+end
+
 -- Set the REPL visibility (`, Esc)
 function set_active(active)
 	if active == repl_active then return end
@@ -185,9 +197,11 @@ function set_active(active)
 		repl_active = true
 		insert_mode = false
 		mp.enable_key_bindings('repl-input', 'allow-hide-cursor+allow-vo-dragging')
+		enable_messages()
 	else
 		repl_active = false
 		mp.disable_key_bindings('repl-input')
+		enable_messages(true)
 	end
 	update()
 end
@@ -648,7 +662,7 @@ mp.observe_property('osd-width', 'native', update)
 mp.observe_property('osd-height', 'native', update)
 
 -- Watch for log-messages and print them in the REPL console
-mp.enable_messages('info')
+enable_messages(true)
 mp.register_event('log-message', function(e)
 	-- Ignore log messages from the OSD because of paranoia, since writing them
 	-- to the OSD could generate more messages in an infinite loop.
