@@ -85,17 +85,37 @@ end
 
 local repl_active = false
 local insert_mode = false
+local pending_update = false
 local line = ''
 local cursor = 1
 local history = {}
 local history_pos = 1
 local log_ring = {}
 
+local update_timer = nil
+update_timer = mp.add_periodic_timer(0.05, function()
+	if pending_update then
+		update()
+	else
+		update_timer:kill()
+	end
+end)
+update_timer:kill()
+
 -- Add a line to the log buffer (which is limited to 100 lines)
 function log_add(style, text)
 	log_ring[#log_ring + 1] = { style = style, text = text }
 	if #log_ring > 100 then
 		table.remove(log_ring, 1)
+	end
+
+	if repl_active then
+		if not update_timer:is_enabled() then
+			update()
+			update_timer:resume()
+		else
+			pending_update = true
+		end
 	end
 end
 
@@ -115,6 +135,8 @@ end
 
 -- Render the REPL and console as an ASS OSD
 function update()
+	pending_update = false
+
 	local screenx, screeny, aspect = mp.get_osd_size()
 	screenx = screenx / opts.scale
 	screeny = screeny / opts.scale
@@ -668,10 +690,24 @@ mp.register_event('log-message', function(e)
 	-- to the OSD could generate more messages in an infinite loop.
 	if e.prefix:sub(1, 3) == 'osd' then return end
 
-	-- Use color for warn/error/fatal messages. Colors are stolen from base16
-	-- Eighties by Chris Kempson.
+	-- Ignore buffer overflow warning messages. Overflowed log messages would
+	-- have been offscreen anyway.
+	if e.prefix == 'overflow' then return end
+
+	-- Filter out trace-level log messages, even if the terminal-default log
+	-- level includes them. These aren't too useful for an on-screen display
+	-- without scrollback and they include messages that are generated from the
+	-- OSD display itself.
+	if e.level == 'trace' then return end
+
+	-- Use color for debug/v/warn/error/fatal messages. Colors are stolen from
+	-- base16 Eighties by Chris Kempson.
 	local style = ''
-	if e.level == 'warn' then
+	if e.level == 'debug' then
+		style = '{\\1c&Ha09f93&}'
+	elseif e.level == 'v' then
+		style = '{\\1c&H99cc99&}'
+	elseif e.level == 'warn' then
 		style = '{\\1c&H66ccff&}'
 	elseif e.level == 'error' then
 		style = '{\\1c&H7a77f2&}'
@@ -680,5 +716,4 @@ mp.register_event('log-message', function(e)
 	end
 
 	log_add(style, '[' .. e.prefix .. '] ' .. e.text)
-	update()
 end)
