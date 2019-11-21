@@ -687,6 +687,9 @@ mp.register_event('log-message', function(e)
 	-- to the OSD could generate more messages in an infinite loop.
 	if e.prefix:sub(1, 3) == 'osd' then return end
 
+	-- Ignore messages output by this script.
+	if e.prefix == mp.get_script_name() then return end
+
 	-- Ignore buffer overflow warning messages. Overflowed log messages would
 	-- have been offscreen anyway.
 	if e.prefix == 'overflow' then return end
