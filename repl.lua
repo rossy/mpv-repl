@@ -91,6 +91,7 @@ local cursor = 1
 local history = {}
 local history_pos = 1
 local log_ring = {}
+local key_bindings = {}
 
 local update_timer = nil
 update_timer = mp.add_periodic_timer(0.05, function()
@@ -220,9 +221,10 @@ function set_active(active)
 		insert_mode = false
 		mp.enable_key_bindings('repl-input', 'allow-hide-cursor+allow-vo-dragging')
 		enable_messages()
+		define_key_bindings()
 	else
 		repl_active = false
-		mp.disable_key_bindings('repl-input')
+		undefine_key_bindings()
 		enable_messages(true)
 	end
 	update()
@@ -275,7 +277,7 @@ function handle_char_input(c)
 	else
 		line = line:sub(1, cursor - 1) .. c .. line:sub(cursor)
 	end
-	cursor = cursor + 1
+	cursor = cursor + #c
 	update()
 end
 
@@ -592,30 +594,6 @@ function paste(clip)
 	update()
 end
 
--- The REPL has pretty specific requirements for key bindings that aren't
--- really satisified by any of mpv's helper methods, since they must be in
--- their own input section, but they must also raise events on key-repeat.
--- Hence, this function manually creates an input section and puts a list of
--- bindings in it.
-function add_repl_bindings(bindings)
-	local cfg = ''
-	for i, binding in ipairs(bindings) do
-		local key = binding[1]
-		local fn = binding[2]
-		local name = '__repl_binding_' .. i
-		mp.add_key_binding(nil, name, fn, 'repeatable')
-		cfg = cfg .. key .. ' script-binding ' .. mp.script_name .. '/' ..
-		      name .. '\n'
-	end
-	mp.commandv('define-section', 'repl-input', cfg, 'force')
-end
-
--- Mapping from characters to mpv key names
-local binding_name_map = {
-	[' '] = 'SPACE',
-	['#'] = 'SHARP',
-}
-
 -- List of input bindings. This is a weird mashup between common GUI text-input
 -- bindings and readline bindings.
 local bindings = {
@@ -655,17 +633,36 @@ local bindings = {
 	{ 'meta+v',      function() paste(true) end             },
 	{ 'ctrl+w',      del_word                               },
 }
--- Add bindings for all the printable US-ASCII characters from ' ' to '~'
--- inclusive. Note, this is a pretty hacky way to do text input. mpv's input
--- system was designed for single-key key bindings rather than text input, so
--- things like dead-keys and non-ASCII input won't work. This is probably okay
--- though, since all mpv's commands and properties can be represented in ASCII.
-for b = (' '):byte(), ('~'):byte() do
-	local c = string.char(b)
-	local binding = binding_name_map[c] or c
-	bindings[#bindings + 1] = {binding, function() handle_char_input(c) end}
+
+local function text_input(info)
+	if info.key_text and (info.event == "press" or info.event == "down"
+						  or info.event == "repeat")
+	then
+		handle_char_input(info.key_text)
+	end
 end
-add_repl_bindings(bindings)
+
+function define_key_bindings()
+	if #key_bindings > 0 then
+		return
+	end
+	for _, bind in ipairs(bindings) do
+		-- Generate arbitrary name for removing the bindings later.
+		local name = "_repl_" .. (#key_bindings + 1)
+		key_bindings[#key_bindings + 1] = name
+		mp.add_forced_key_binding(bind[1], name, bind[2], {repeatable = true})
+	end
+	mp.add_forced_key_binding("any_unicode", "_repl_text", text_input,
+		{repeatable = true, complex = true})
+	key_bindings[#key_bindings + 1] = "_repl_text"
+end
+
+function undefine_key_bindings()
+	for _, name in ipairs(key_bindings) do
+		mp.remove_key_binding(name)
+	end
+	key_bindings = {}
+end
 
 -- Add a global binding for enabling the REPL. While it's enabled, its bindings
 -- will take over and it can be closed with ESC.
