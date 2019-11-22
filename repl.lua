@@ -58,21 +58,10 @@ local option_info = {
 	'name', 'type', 'set-from-commandline', 'set-locally', 'default-value',
 	'min', 'max', 'choices',
 }
-local cmd_list = {
-	'ignore', 'seek', 'revert-seek', 'quit', 'quit-watch-later', 'stop',
-	'frame-step', 'frame-back-step', 'playlist-next', 'playlist-prev',
-	'playlist-shuffle', 'sub-step', 'sub-seek', 'osd', 'print-text',
-	'show-text', 'show-progress', 'sub-add', 'sub-remove', 'sub-reload',
-	'tv-last-channel', 'screenshot', 'screenshot-to-file', 'screenshot-raw',
-	'loadfile', 'loadlist', 'playlist-clear', 'playlist-remove',
-	'playlist-move', 'run', 'set', 'add', 'cycle', 'multiply', 'cycle-values',
-	'enable-section', 'disable-section', 'define-section', 'ab-loop',
-	'drop-buffers', 'af', 'af-command', 'ao-reload', 'vf', 'vf-command',
-	'script-binding', 'script-message', 'script-message-to', 'overlay-add',
-	'overlay-remove', 'write-watch-later-config', 'hook-add', 'hook-ack',
-	'mouse', 'keypress', 'keydown', 'keyup', 'audio-add', 'audio-remove',
-	'audio-reload', 'rescan-external-file', 'apply-profile', 'load-script',
-}
+local cmd_list = {}
+for i, cmd in ipairs(mp.get_property_native('command-list')) do
+	cmd_list[i] = cmd.name
+end
 local prop_list = mp.get_property_native('property-list')
 for _, opt in ipairs(mp.get_property_native('options')) do
 	prop_list[#prop_list + 1] = 'options/' .. opt
