@@ -36,7 +36,7 @@ function detect_platform()
 	-- Kind of a dumb way of detecting the platform but whatever
 	if mp.get_property_native('options/vo-mmcss-profile', o) ~= o then
 		return 'windows'
-	elseif mp.get_property_native('options/input-app-events', o) ~= o then
+	elseif mp.get_property_native('options/cocoa-force-dedicated-gpu', o) ~= o then
 		return 'macos'
 	end
 	return 'linux'
@@ -533,15 +533,16 @@ end
 -- Returns a string of UTF-8 text from the clipboard (or the primary selection)
 function get_clipboard(clip)
 	if platform == 'linux' then
-		local res = utils.subprocess({ args = {
-			'xclip', '-selection', clip and 'clipboard' or 'primary', '-out'
-		} })
+		local res = utils.subprocess({
+			args = { 'xclip', '-selection', clip and 'clipboard' or 'primary', '-out' },
+			playback_only = false,
+		})
 		if not res.error then
 			return res.stdout
 		end
 	elseif platform == 'windows' then
-		local res = utils.subprocess({ args = {
-			'powershell', '-NoProfile', '-Command', [[& {
+		local res = utils.subprocess({
+			args = { 'powershell', '-NoProfile', '-Command', [[& {
 				Trap {
 					Write-Error -ErrorRecord $_
 					Exit 1
@@ -558,13 +559,17 @@ function get_clipboard(clip)
 				$clip = $clip -Replace "`r",""
 				$u8clip = [System.Text.Encoding]::UTF8.GetBytes($clip)
 				[Console]::OpenStandardOutput().Write($u8clip, 0, $u8clip.Length)
-			}]]
-		} })
+			}]] },
+			playback_only = false,
+		})
 		if not res.error then
 			return res.stdout
 		end
 	elseif platform == 'macos' then
-		local res = utils.subprocess({ args = { 'pbpaste' } })
+		local res = utils.subprocess({
+			args = { 'pbpaste' },
+			playback_only = false,
+		})
 		if not res.error then
 			return res.stdout
 		end
