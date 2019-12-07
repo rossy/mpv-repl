@@ -249,7 +249,7 @@ function prev_utf8(str, pos)
 	return pos
 end
 
--- Insert a character at the current cursor position (' '-'~', Shift+Enter)
+-- Insert a character at the current cursor position (any_unicode, Shift+Enter)
 function handle_char_input(c)
 	if insert_mode then
 		line = line:sub(1, cursor - 1) .. c .. line:sub(next_utf8(line, cursor))
