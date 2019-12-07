@@ -1,6 +1,4 @@
--- repl.lua -- A graphical REPL for mpv input commands
---
--- © 2016, James Ross-Gowan
+-- Copyright (C) 2019 the mpv developers
 --
 -- Permission to use, copy, modify, and/or distribute this software for any
 -- purpose with or without fee is hereby granted, provided that the above
