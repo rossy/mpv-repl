@@ -190,18 +190,6 @@ function update()
 	mp.set_osd_ass(screenx, screeny, ass.text)
 end
 
-function enable_messages(silent)
-	if silent then
-		if not pcall(function () mp.enable_messages('silent:terminal-default') end) then
-			mp.enable_messages('info')
-		end
-	else
-		if not pcall(function () mp.enable_messages('terminal-default') end) then
-			mp.enable_messages('info')
-		end
-	end
-end
-
 -- Set the REPL visibility (`, Esc)
 function set_active(active)
 	if active == repl_active then return end
@@ -209,12 +197,12 @@ function set_active(active)
 		repl_active = true
 		insert_mode = false
 		mp.enable_key_bindings('repl-input', 'allow-hide-cursor+allow-vo-dragging')
-		enable_messages()
+		mp.enable_messages('terminal-default')
 		define_key_bindings()
 	else
 		repl_active = false
 		undefine_key_bindings()
-		enable_messages(true)
+		mp.enable_messages('silent:terminal-default')
 	end
 	update()
 end
@@ -674,8 +662,10 @@ end)
 mp.observe_property('osd-width', 'native', update)
 mp.observe_property('osd-height', 'native', update)
 
--- Watch for log-messages and print them in the REPL console
-enable_messages(true)
+-- Enable log messages. In silent mode, mpv will queue log messages in a buffer
+-- until enable_messages is called again without the silent: prefix.
+mp.enable_messages('silent:terminal-default')
+
 mp.register_event('log-message', function(e)
 	-- Ignore log messages from the OSD because of paranoia, since writing them
 	-- to the OSD could generate more messages in an infinite loop.
