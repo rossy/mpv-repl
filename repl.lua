@@ -39,7 +39,7 @@ function detect_platform()
 	elseif mp.get_property_native('options/cocoa-force-dedicated-gpu', o) ~= o then
 		return 'macos'
 	end
-	return 'linux'
+	return 'x11'
 end
 
 -- Pick a better default font for Windows and macOS
@@ -532,7 +532,7 @@ end
 
 -- Returns a string of UTF-8 text from the clipboard (or the primary selection)
 function get_clipboard(clip)
-	if platform == 'linux' then
+	if platform == 'x11' then
 		local res = utils.subprocess({
 			args = { 'xclip', '-selection', clip and 'clipboard' or 'primary', '-out' },
 			playback_only = false,
