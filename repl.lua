@@ -28,7 +28,7 @@ local opts = {
 	font = 'monospace',
 	-- Set the font size used for the REPL and the console. This will be
 	-- multiplied by "scale."
-	['font-size'] = 16,
+	font_size = 16,
 }
 
 function detect_platform()
@@ -141,14 +141,14 @@ function update()
 	local style = '{\\r' ..
 	               '\\1a&H00&\\3a&H00&\\4a&H99&' ..
 	               '\\1c&Heeeeee&\\3c&H111111&\\4c&H000000&' ..
-	               '\\fn' .. opts.font .. '\\fs' .. opts['font-size'] ..
+	               '\\fn' .. opts.font .. '\\fs' .. opts.font_size ..
 	               '\\bord2\\xshad0\\yshad1\\fsp0\\q1}'
 	-- Create the cursor glyph as an ASS drawing. ASS will draw the cursor
 	-- inline with the surrounding text, but it sets the advance to the width
 	-- of the drawing. So the cursor doesn't affect layout too much, make it as
 	-- thin as possible and make it appear to be 1px wide by giving it 0.5px
 	-- horizontal borders.
-	local cheight = opts['font-size'] * 8
+	local cheight = opts.font_size * 8
 	local cglyph = '{\\r' ..
 	                '\\1a&H44&\\3a&H44&\\4a&H99&' ..
 	                '\\1c&Heeeeee&\\3c&Heeeeee&\\4c&H000000&' ..
@@ -158,11 +158,11 @@ function update()
 	local before_cur = ass_escape(line:sub(1, cursor - 1))
 	local after_cur = ass_escape(line:sub(cursor))
 
-	-- Render log messages as ASS. This will render at most screeny / font-size
+	-- Render log messages as ASS. This will render at most screeny / font_size
 	-- messages.
 	local log_ass = ''
 	local log_messages = #log_buffer
-	local log_max_lines = math.ceil(screeny / opts['font-size'])
+	local log_max_lines = math.ceil(screeny / opts.font_size)
 	if log_max_lines < log_messages then
 		log_messages = log_max_lines
 	end
