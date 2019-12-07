@@ -79,7 +79,7 @@ local line = ''
 local cursor = 1
 local history = {}
 local history_pos = 1
-local log_ring = {}
+local log_buffer = {}
 local key_bindings = {}
 
 local update_timer = nil
@@ -94,9 +94,9 @@ update_timer:kill()
 
 -- Add a line to the log buffer (which is limited to 100 lines)
 function log_add(style, text)
-	log_ring[#log_ring + 1] = { style = style, text = text }
-	if #log_ring > 100 then
-		table.remove(log_ring, 1)
+	log_buffer[#log_buffer + 1] = { style = style, text = text }
+	if #log_buffer > 100 then
+		table.remove(log_buffer, 1)
 	end
 
 	if repl_active then
@@ -161,13 +161,13 @@ function update()
 	-- Render log messages as ASS. This will render at most screeny / font-size
 	-- messages.
 	local log_ass = ''
-	local log_messages = #log_ring
+	local log_messages = #log_buffer
 	local log_max_lines = math.ceil(screeny / opts['font-size'])
 	if log_max_lines < log_messages then
 		log_messages = log_max_lines
 	end
-	for i = #log_ring - log_messages + 1, #log_ring do
-		log_ass = log_ass .. style .. log_ring[i].style .. ass_escape(log_ring[i].text)
+	for i = #log_buffer - log_messages + 1, #log_buffer do
+		log_ass = log_ass .. style .. log_buffer[i].style .. ass_escape(log_buffer[i].text)
 	end
 
 	ass:new_event()
@@ -526,7 +526,7 @@ end
 
 -- Empty the log buffer of all messages (Ctrl+L)
 function clear_log_buffer()
-	log_ring = {}
+	log_buffer = {}
 	update()
 end
 
