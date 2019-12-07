@@ -20,6 +20,8 @@ local assdraw = require 'mp.assdraw'
 
 -- Default options
 local opts = {
+	-- Default key binding to open the REPL
+	key_open = '`',
 	-- All drawing is scaled by this value, including the text borders and the
 	-- cursor. Change it if you have a high-DPI display.
 	scale = 1,
@@ -190,7 +192,7 @@ function update()
 	mp.set_osd_ass(screenx, screeny, ass.text)
 end
 
--- Set the REPL visibility (`, Esc)
+-- Set the REPL visibility (opts.key_open, Esc)
 function set_active(active)
 	if active == repl_active then return end
 	if active then
@@ -648,7 +650,7 @@ end
 
 -- Add a global binding for enabling the REPL. While it's enabled, its bindings
 -- will take over and it can be closed with ESC.
-mp.add_key_binding('`', 'repl-enable', function()
+mp.add_key_binding(opts.key_open, 'repl-enable', function()
 	set_active(true)
 end)
 
